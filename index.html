@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ --> 
+<!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"><!--<![endif]-->
+
+
+<head>
+  <meta charset="utf-8">
+  <!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame 
+       Remove this if you use the .htaccess -->
+  <!--meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"-->
+  <title></title>
+  <meta name="description" content="Stell Y. Wu">
+  <meta name="author" content="">
+
+  <!--  Mobile viewport optimized: j.mp/bplateviewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-geo-projection/0.2.9/d3.geo.projection.min.js"</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"</script>
+  <link type="text/css" rel="stylesheet" href="css/style.css" /> 
+  
+  <script type="text/javascript">  
+ 
+      function draw(geo_data) {
+        "use strict";
+        var margin = 5,
+            mapwidth=document.getElementById("worldmap").clientWidth,
+            mapheight=document.getElementById("worldmap").clientHeight,
+            width = mapwidth - margin,
+            height =mapheight - margin;
+
+        var svg = d3.select("#worldmap")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append('g')
+            .attr('class', 'map');
+        
+        
+        var projection = d3.geo.kavrayskiy7()
+             .center([0,0])   
+             .scale(width/5.2)
+             .translate([width/2.0, width/3.0])
+             .precision(.1);
+
+        console.log(width,height)
+
+        var path = d3.geo.path().projection(projection);
+  
+        var map = svg.selectAll('path')
+                     .data(geo_data.features)
+                     .enter()
+                     .append('path')
+                     .attr('d', path)
+                     .style('fill', '#404040')
+                     .style('stroke', 'white')
+                     .style('stroke-width', 0.5);        
+        
+//    draw circles
+        var g=svg.append("g")
+                 .attr("class","bubble")
+
+	    var rScale=d3.scale.linear()
+		            .domain([0,1400000000])
+			        .range([4,30]);
+
+        var color = d3.scale.linear()
+                    .domain([2.8,5.4, 7.6])
+                    .range(["rgb(0,0,204)","white","rgb(204,0,0)"]);    
+                    
+//      mounseover events 
+        var textbox = d3.select("body").append("div")
+                .attr("class","tooltip")
+                .style("opacity",0);
+                
+
+        d3.tsv("happy_pop_gdp_lat_lon.tsv",function(error,data) {
+             g.selectAll("circle")
+             .data(data)
+             .enter()
+             .append("circle")
+             .attr("cx",function(d) {
+                return projection([d.lon, d.lat])[0];
+                })
+             .attr("cy",function(d) {
+                return projection([d.lon, d.lat])[1];
+                })
+             .attr("r",function(d) {
+                return rScale(+d['2014_pop']);
+                })
+             .style("fill",function(d) {
+                return color(+d['Ladder score']); 
+                })        
+             .on("mouseover", function(d) {
+                textbox.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                textbox.html(d['country']+"<br>"+d3.format(".1f")(+d['Ladder score']))
+                    .style("left",(d3.event.pageX)+"px")
+                    .style("top",(d3.event.pageY-28)+"px");
+                })    
+             .on("mouseout",function(d) {
+                textbox.transition()
+                    .duration(600)
+                    .style("opacity",0);
+                }) 
+
+            }); //d3.tsv
+
+        svg.append("text")
+            .attr("x",(width/2))
+            .attr("y",0-(margin.top/10))
+            .attr("text-anchor","middle")
+            .style("font-size","16px")
+            .text("World Happiness");
+
+        
+
+
+      };    //draw
+      
+            
+//        d3.csv("happy_per_year.csv",function(d){
+//        return {
+//            country: d['country'],
+//            happy1: +d['mean1'],            
+//            happy2: +d['mean2'],
+//            };
+//       }, function(data) {
+//        console.log(data[0]);
+//    });    
+    
+
+//    var slopeGraph=d3.custom.slopegraph();
+//    d3.select('body')
+//        .datum(data)
+//        .call(slopeGraph);
+        
+                
+      </script>
+
+  </head>
+
+
+<body>
+<div id='project-header' >
+    <h1>World Happiness
+   <!--<a href='www.thedatajournalist.com'> span id='go-back'>&larr; back</span </a>-->
+    </h1>
+</div>
+
+
+<div id='description'>
+    <h2>Our happiness varies greatly over the world</h2>
+        <p>the United Nations Sustainable Development Solution Network (SDSN) has published the third round of <a href='http://worldhappiness.report'>the World Happiness Report</a> in April 2015. Here's a look at the happiness score for each country, ranking from 0 (extemely unhappy) to 10 (extemely happy). The bubble size represents the log scale of the population of the country. </p>
+
+        <p><type1>Happiness</type1> overspread Western Europe, the Americas, except for a few Caribbean island-nations that are vulnerable to natural disasters.<type2> Blue </type2> threatens East Europe and devours Africa. Over one third of us are living in <type2> unhappy </type2> Indian and China.</p>
+        <p>     </p>
+</div>
+
+<div id='worldmap'>
+    <script type="text/javascript">    
+    d3.json("world_countries.json", draw);
+    </script>
+    <p> If you are using <b>Internet Exploror</b> and are not looking at a beautiful map here, try press F12 and then refresh the page. You may press F12 again to close the Developer Tools.</p> 
+</div>
+
+<div id='footer'>
+    Made by <a href='http://www.stellaywu.com' target="_blank">Stella Wu</a>, 2015.<br><a href='http://www.thedatajournalist.com' target="_blank">TheDataJournalist.com</a>
+</div>
+
+</body>
+</html>
